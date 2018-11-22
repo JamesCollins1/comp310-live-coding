@@ -125,6 +125,7 @@ vblankwait2:
     BPL vblankwait2
 
     ; End of initialisation code
+    
 
     JSR InitialiseGame
 
@@ -151,7 +152,7 @@ InitialiseGame: ; Begin subroutine
     STA PPUADDR
 
     ; Write the background colour
-    LDA #$30
+    LDA #$11
     STA PPUDATA
 
     ; Write the palette colours
