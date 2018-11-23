@@ -26,40 +26,55 @@ BUTTON_DOWN   = %00000100
 BUTTON_LEFT   = %00000010
 BUTTON_RIGHT  = %00000001
 
-ENEMY_SQUAD_WIDTH    = 6
-ENEMY_SQUAD_HEIGHT   = 4
-NUM_ENEMIES          = ENEMY_SQUAD_WIDTH * ENEMY_SQUAD_HEIGHT
-ENEMY_SPACING        = 16
-ENEMY_DESCENT_SPEED  = 4
+NUM_PLAYERSPRITES = 4
 
-ENEMY_HITBOX_WIDTH   = 8
-ENEMY_HITBOX_HEIGHT  = 8
-BULLET_HITBOX_X      = 3 ; Relative to sprite top left corner
-BULLET_HITBOX_Y      = 1
+
+
+BULLET_HITBOX_X      = 2 ; Relative to sprite top left corner
+BULLET_HITBOX_Y      = 2
 BULLET_HITBOX_WIDTH  = 2
 BULLET_HITBOX_HEIGHT = 6
 
     .rsset $0000
 joypad1_state      .rs 1
+joypad2_state      .rs 1
 bullet_active      .rs 1
+bullet2_active     .rs 1
 temp_x             .rs 1
 temp_y             .rs 1
-enemy_info         .rs 4 * NUM_ENEMIES
+foam1_hasMoved     .rs 1
+foam2_hasMoved     .rs 1
+foam3_hasMoved     .rs 1
+foam4_hasMoved     .rs 1
 
     .rsset $0200
-sprite_player      .rs 4
+sprite_player1     .rs 4  ;4 sprites make up 1 player
+sprite_player12    .rs 4
+sprite_player13    .rs 4
+sprite_player14    .rs 4
+sprite_player2     .rs 4  ;4 sprites make up 1 player
+sprite_player22    .rs 4
+sprite_player23    .rs 4
+sprite_player24    .rs 4
 sprite_bullet      .rs 4
-sprite_enemy       .rs 4 * NUM_ENEMIES
+sprite_bullet1     .rs 4
+sprite_foam1       .rs 4
+sprite_foam2       .rs 4
+sprite_foam3       .rs 4
+sprite_foam4       .rs 4
+sprite_smallIsland .rs 4
+sprite_smallIsland2 .rs 4
+sprite_smallIsland3 .rs 4
+sprite_largeIsland1 .rs 4
+sprite_largeIsland2 .rs 4
+sprite_largeIsland3 .rs 4
+sprite_largeIsland4 .rs 4
 
     .rsset $0000
 SPRITE_Y           .rs 1
 SPRITE_TILE        .rs 1
 SPRITE_ATTRIB      .rs 1
 SPRITE_X           .rs 1
-
-    .rsset $0000
-ENEMY_SPEED        .rs 1
-ENEMY_ALIVE        .rs 1
 
     .bank 0
     .org $C000
@@ -158,56 +173,211 @@ InitialiseGame: ; Begin subroutine
     ; Write the palette colours
     LDA #$17
     STA PPUDATA
-    LDA #$0F
+    LDA #$3D
+    STA PPUDATA
+    LDA #$07
+    STA PPUDATA
+
+;Secondary Palette
+    LDA #$11
+    STA PPUDATA
+    LDA #$30
+    STA PPUDATA
+    LDA #$11
+    STA PPUDATA
+    LDA #$39
+    STA PPUDATA
+
+;Island Palette
+    LDA #$11
     STA PPUDATA
     LDA #$27
     STA PPUDATA
+    LDA #$07
+    STA PPUDATA
+    LDA #$19
+    STA PPUDATA
+
 
     ; Write sprite data for sprite 0
     LDA #120    ; Y position
-    STA sprite_player + SPRITE_Y
+    STA sprite_player1 + SPRITE_Y
     LDA #0      ; Tile number
-    STA sprite_player + SPRITE_TILE
+    STA sprite_player1 + SPRITE_TILE
     LDA #0      ; Attributes
-    STA sprite_player + SPRITE_ATTRIB
-    LDA #128    ; X position
-    STA sprite_player + SPRITE_X
+    STA sprite_player1 + SPRITE_ATTRIB
+    LDA #30    ; X position
+    STA sprite_player1 + SPRITE_X
 
-    ; Initialise enemies
-    LDX #0
-    LDA #ENEMY_SQUAD_HEIGHT * ENEMY_SPACING
-    STA temp_y
-InitEnemies_LoopY:
-    LDA #ENEMY_SQUAD_WIDTH * ENEMY_SPACING
-    STA temp_x
-InitEnemies_LoopX:
-    ; Accumulator = temp_x here
-    STA sprite_enemy+SPRITE_X, x
-    LDA temp_y
-    STA sprite_enemy+SPRITE_Y, x
-    LDA #0
-    STA sprite_enemy+SPRITE_ATTRIB, x
-    LDA #1
-    STA sprite_enemy+SPRITE_TILE, x
-    STA enemy_info+ENEMY_SPEED, x
-    STA enemy_info+ENEMY_ALIVE, x
-    ; Increment X register by 4
-    TXA
-    CLC
-    ADC #4
-    TAX
-    ; Loop check for x value
-    LDA temp_x
-    SEC
-    SBC #ENEMY_SPACING
-    STA temp_x
-    BNE InitEnemies_LoopX
-    ; Loop check for y value
-    LDA temp_y
-    SEC
-    SBC #ENEMY_SPACING
-    STA temp_y
-    BNE InitEnemies_LoopY
+    LDA #120    ; Y position
+    STA sprite_player12 + SPRITE_Y
+    LDA #1      ; Tile number
+    STA sprite_player12 + SPRITE_TILE
+    LDA #0      ; Attributes
+    STA sprite_player12 + SPRITE_ATTRIB
+    LDA #38    ; X position
+    STA sprite_player12 + SPRITE_X
+
+    LDA #128    ; Y position
+    STA sprite_player13 + SPRITE_Y
+    LDA #$10      ; Tile number
+    STA sprite_player13 + SPRITE_TILE
+    LDA #0      ; Attributes
+    STA sprite_player13 + SPRITE_ATTRIB
+    LDA #30    ; X position
+    STA sprite_player13 + SPRITE_X
+
+    LDA #128    ; Y position
+    STA sprite_player14 + SPRITE_Y
+    LDA #$11      ; Tile number
+    STA sprite_player14 + SPRITE_TILE
+    LDA #0      ; Attributes
+    STA sprite_player14 + SPRITE_ATTRIB
+    LDA #38    ; X position
+    STA sprite_player14 + SPRITE_X
+
+
+; Initialising player 2
+    LDA #120    ; Y position
+    STA sprite_player2 + SPRITE_Y
+    LDA #0      ; Tile number
+    STA sprite_player2 + SPRITE_TILE
+    LDA #0      ; Attributes
+    STA sprite_player2 + SPRITE_ATTRIB
+    LDA #210    ; X position
+    STA sprite_player2 + SPRITE_X
+
+    LDA #120    ; Y position
+    STA sprite_player22 + SPRITE_Y
+    LDA #1      ; Tile number
+    STA sprite_player22 + SPRITE_TILE
+    LDA #0      ; Attributes
+    STA sprite_player22 + SPRITE_ATTRIB
+    LDA #218   ; X position
+    STA sprite_player22 + SPRITE_X
+
+    LDA #128    ; Y position
+    STA sprite_player23 + SPRITE_Y
+    LDA #$10    ; Tile number
+    STA sprite_player23 + SPRITE_TILE
+    LDA #0      ; Attributes
+    STA sprite_player23 + SPRITE_ATTRIB
+    LDA #210    ; X position
+    STA sprite_player23 + SPRITE_X
+
+    LDA #128    ; Y position
+    STA sprite_player24 + SPRITE_Y
+    LDA #$11      ; Tile number
+    STA sprite_player24 + SPRITE_TILE
+    LDA #0      ; Attributes
+    STA sprite_player24 + SPRITE_ATTRIB
+    LDA #218   ; X position
+    STA sprite_player24 + SPRITE_X
+
+; Initialise the waves
+    LDA #115  ; Y Position
+    STA sprite_foam1 + SPRITE_Y
+    LDA #$03  ; Tile Number
+    STA sprite_foam1 + SPRITE_TILE
+    LDA #1   ; Attributes
+    STA sprite_foam1 + SPRITE_ATTRIB
+    LDA #140  ; X Position
+    STA sprite_foam1 + SPRITE_X
+
+    LDA #20  ; Y Position
+    STA sprite_foam2 + SPRITE_Y
+    LDA #$03  ; Tile Number
+    STA sprite_foam2 + SPRITE_TILE
+    LDA #1   ; Attributes
+    STA sprite_foam2 + SPRITE_ATTRIB
+    LDA #200  ; X Position
+    STA sprite_foam2 + SPRITE_X
+
+    LDA #60  ; Y Position
+    STA sprite_foam3 + SPRITE_Y
+    LDA #$03  ; Tile Number
+    STA sprite_foam3 + SPRITE_TILE
+    LDA #1   ; Attributes
+    STA sprite_foam3 + SPRITE_ATTRIB
+    LDA #75  ; X Position
+    STA sprite_foam3 + SPRITE_X
+
+    LDA #200  ; Y Position
+    STA sprite_foam4 + SPRITE_Y
+    LDA #$03  ; Tile Number
+    STA sprite_foam4 + SPRITE_TILE
+    LDA #1   ; Attributes
+    STA sprite_foam4 + SPRITE_ATTRIB
+    LDA #20  ; X Position
+    STA sprite_foam4 + SPRITE_X
+
+; Initialising the islands
+
+    LDA #120
+    STA sprite_smallIsland + SPRITE_Y
+    LDA #$04
+    STA sprite_smallIsland + SPRITE_TILE
+    LDA #2
+    STA sprite_smallIsland + SPRITE_ATTRIB
+    LDA #50
+    STA sprite_smallIsland + SPRITE_X
+
+    LDA #120
+    STA sprite_smallIsland2 + SPRITE_Y
+    LDA #$04
+    STA sprite_smallIsland2 + SPRITE_TILE
+    LDA #2
+    STA sprite_smallIsland2 + SPRITE_ATTRIB
+    LDA #66
+    STA sprite_smallIsland2 + SPRITE_X
+
+    LDA #112
+    STA sprite_smallIsland3 + SPRITE_Y
+    LDA #$04
+    STA sprite_smallIsland3 + SPRITE_TILE
+    LDA #2
+    STA sprite_smallIsland3 + SPRITE_ATTRIB
+    LDA #58
+    STA sprite_smallIsland3 + SPRITE_X
+
+    ;Large island
+
+    LDA #90
+    STA sprite_largeIsland1 + SPRITE_Y
+    LDA #$05
+    STA sprite_largeIsland1 + SPRITE_TILE
+    LDA #2
+    STA sprite_largeIsland1 + SPRITE_ATTRIB
+    LDA #180
+    STA sprite_largeIsland1 + SPRITE_X
+
+    LDA #90
+    STA sprite_largeIsland2 + SPRITE_Y
+    LDA #$06
+    STA sprite_largeIsland2 + SPRITE_TILE
+    LDA #2
+    STA sprite_largeIsland2 + SPRITE_ATTRIB
+    LDA #188
+    STA sprite_largeIsland2 + SPRITE_X
+
+    LDA #98
+    STA sprite_largeIsland3 + SPRITE_Y
+    LDA #$15
+    STA sprite_largeIsland3 + SPRITE_TILE
+    LDA #2
+    STA sprite_largeIsland3 + SPRITE_ATTRIB
+    LDA #180
+    STA sprite_largeIsland3 + SPRITE_X
+
+    LDA #98
+    STA sprite_largeIsland4 + SPRITE_Y
+    LDA #$16
+    STA sprite_largeIsland4 + SPRITE_TILE
+    LDA #2
+    STA sprite_largeIsland4 + SPRITE_ATTRIB
+    LDA #188
+    STA sprite_largeIsland4 + SPRITE_X
+    
 
     RTS ; End subroutine
 
@@ -221,181 +391,320 @@ NMI:
     LDA #0
     STA JOYPAD1
 
-    ; Read joypad state
+    ;Initialise controller 2
+    LDA #1
+    STA JOYPAD2
+    LDA #0
+    STA JOYPAD2
+
+    ; Read joypad1 state
     LDX #0
     STX joypad1_state
-ReadController:
+ReadController1:
     LDA JOYPAD1
     LSR A
     ROL joypad1_state
     INX
     CPX #8
-    BNE ReadController
+    BNE ReadController1
 
-    ; React to Right button
-    LDA joypad1_state
-    AND #BUTTON_RIGHT
-    BEQ ReadRight_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA sprite_player + SPRITE_X
-    CLC
-    ADC #1
-    STA sprite_player + SPRITE_X
-ReadRight_Done:         ; }
+    ; Read joypad2 state
+    LDX #0
+    STX joypad2_state
+ReadController2:
+    LDA JOYPAD2
+    LSR A
+    ROL joypad2_state
+    INX
+    CPX #8
+    BNE ReadController2
 
-    ; React to Down button
+    ; Player 1 react to Down button
     LDA joypad1_state
     AND #BUTTON_DOWN
-    BEQ ReadDown_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA sprite_player + SPRITE_Y
+    BEQ Joypad1ReadDown_Done
+  ; if ((JOYPAD1 & 1) != 0) {
+    LDA sprite_player1 + SPRITE_Y
     CLC
     ADC #1
-    STA sprite_player + SPRITE_Y
-ReadDown_Done:         ; }
+    STA sprite_player1 + SPRITE_Y
 
-    ; React to Left button
-    LDA joypad1_state
-    AND #BUTTON_LEFT
-    BEQ ReadLeft_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA sprite_player + SPRITE_X
-    SEC
-    SBC #1
-    STA sprite_player + SPRITE_X
-ReadLeft_Done:         ; }
+    LDA sprite_player12 + SPRITE_Y
+    CLC
+    ADC #1
+    STA sprite_player12 + SPRITE_Y
 
-    ; React to Up button
+    LDA sprite_player13 + SPRITE_Y
+    CLC
+    ADC #1
+    STA sprite_player13 + SPRITE_Y
+
+    LDA sprite_player14 + SPRITE_Y
+    CLC
+    ADC #1
+    STA sprite_player14 + SPRITE_Y
+Joypad1ReadDown_Done:         ; }
+
+    ; Player 1 react to Up button
     LDA joypad1_state
     AND #BUTTON_UP
-    BEQ ReadUp_Done  ; if ((JOYPAD1 & 1) != 0) {
-    LDA sprite_player + SPRITE_Y
+    BEQ Joypad1ReadUp_Done  ; if ((JOYPAD1 & 1) != 0) {
+    LDA sprite_player1 + SPRITE_Y
     SEC
     SBC #1
-    STA sprite_player + SPRITE_Y
-ReadUp_Done:         ; }
+    STA sprite_player1 + SPRITE_Y
 
-    ; React to A button
+    LDA sprite_player12 + SPRITE_Y
+    SEC
+    SBC #1
+    STA sprite_player12 + SPRITE_Y
+
+    LDA sprite_player13 + SPRITE_Y
+    SEC
+    SBC #1
+    STA sprite_player13 + SPRITE_Y
+
+    LDA sprite_player14 + SPRITE_Y
+    SEC
+    SBC #1
+    STA sprite_player14 + SPRITE_Y
+Joypad1ReadUp_Done:         ; }
+
+    ;Player 2 react to down button
+    LDA joypad2_state
+    AND #BUTTON_DOWN
+    BEQ Joypad2ReadDown_Done
+    ; if ((JOYPAD2 & 1) != 0) {
+    LDA sprite_player2 + SPRITE_Y
+    CLC
+    ADC #1
+    STA sprite_player2 + SPRITE_Y
+
+    LDA sprite_player22 + SPRITE_Y
+    CLC
+    ADC #1
+    STA sprite_player22 + SPRITE_Y
+
+    LDA sprite_player23 + SPRITE_Y
+    CLC
+    ADC #1
+    STA sprite_player23 + SPRITE_Y
+
+    LDA sprite_player24 + SPRITE_Y
+    CLC
+    ADC #1
+    STA sprite_player24 + SPRITE_Y
+Joypad2ReadDown_Done:
+    ;}
+
+    ;Player 2 react to up button
+    LDA joypad2_state
+    AND #BUTTON_UP
+    BEQ Joypad2ReadUp_Done
+    ; if ((JOYPAD2 & 1) != 0) {
+        LDA sprite_player2 + SPRITE_Y
+        SEC
+        SBC #1
+        STA sprite_player2 + SPRITE_Y
+
+        LDA sprite_player22 + SPRITE_Y
+        SEC
+        SBC #1
+        STA sprite_player22 + SPRITE_Y
+
+        LDA sprite_player23+ SPRITE_Y
+        SEC
+        SBC #1
+        STA sprite_player23 + SPRITE_Y
+
+        LDA sprite_player24 + SPRITE_Y
+        SEC
+        SBC #1
+        STA sprite_player24 + SPRITE_Y
+Joypad2ReadUp_Done:
+    ;}
+
+
+    ; Player 1 react to A button
     LDA joypad1_state
     AND #BUTTON_A
-    BEQ ReadA_Done
+    BEQ ReadPlayer1A_Done
     ; Spawn a bullet if one is not active
     LDA bullet_active
-    BNE ReadA_Done
+    BNE ReadPlayer1A_Done
     ; No bullet active, so spawn one
     LDA #1
     STA bullet_active
-    LDA sprite_player + SPRITE_Y    ; Y position
+    LDA sprite_player1 + SPRITE_Y    ; Y position
     STA sprite_bullet + SPRITE_Y
     LDA #2      ; Tile number
     STA sprite_bullet + SPRITE_TILE
     LDA #0      ; Attributes
     STA sprite_bullet + SPRITE_ATTRIB
-    LDA sprite_player + SPRITE_X    ; X position
+    LDA sprite_player1 + SPRITE_X    ; X position
     STA sprite_bullet + SPRITE_X
-ReadA_Done:
+ReadPlayer1A_Done:
 
     ; Update the bullet
     LDA bullet_active
     BEQ UpdateBullet_Done
-    LDA sprite_bullet + SPRITE_Y
-    SEC
-    SBC #1
-    STA sprite_bullet + SPRITE_Y
-    BCS UpdateBullet_Done
+    LDA sprite_bullet + SPRITE_X
+    CLC 
+    ADC #2
+    STA sprite_bullet + SPRITE_X
+    BCC UpdateBullet_Done
     ; If carry flag is clear, bullet has left the top of the screen -- destroy it
     LDA #0
     STA bullet_active
 UpdateBullet_Done:
 
-    ; Update enemies
-    LDX #(NUM_ENEMIES-1)*4
-UpdateEnemies_Loop:
-    ; Check if enemy is alive
-    LDA enemy_info+ENEMY_ALIVE, x
-    BNE UpdateEnemies_Start
-    JMP UpdateEnemies_Next
-UpdateEnemies_Start:
-    LDA sprite_enemy+SPRITE_X, x
-    CLC
-    ADC enemy_info+ENEMY_SPEED, x
-    STA sprite_enemy+SPRITE_X, x
-    CMP #256 - ENEMY_SPACING
-    BCS UpdateEnemies_Reverse
-    CMP #ENEMY_SPACING
-    BCC UpdateEnemies_Reverse
-    JMP UpdateEnemies_NoReverse
-UpdateEnemies_Reverse:
-    ; Reverse direction and descend
+        LDA sprite_player2 + SPRITE_X
+        SEC
+        SBC #17
+        CMP sprite_bullet + SPRITE_X
+        BCS UpdatePlayer2_NoCollision
+        CLC
+        ADC #33
+        CMP sprite_bullet + SPRITE_X 
+        BCC UpdatePlayer2_NoCollision
+        LDA sprite_player2 + SPRITE_Y
+        SEC
+        SBC #17
+        CMP sprite_bullet + SPRITE_Y
+        BCS UpdatePlayer2_NoCollision
+        BCS UpdatePlayer2_NoCollision
+        CLC
+        ADC #33
+        CMP sprite_bullet + SPRITE_Y
+        BCC UpdatePlayer2_NoCollision
+        ;Handle Collision
+        LDA #0
+        STA bullet_active
+        LDA #$FF
+        STA sprite_bullet + SPRITE_X
+        LDA #$FF
+        STA sprite_player2 + SPRITE_X
+        LDA #$FF
+        STA sprite_player22 + SPRITE_X
+        LDA #$FF
+        STA sprite_player23 + SPRITE_X
+        LDA #$FF
+        STA sprite_player24 + SPRITE_X
+UpdatePlayer2_NoCollision:
+
+
+
+
+    ;Player 2 react to A button
+    LDA joypad2_state
+    AND #BUTTON_A
+    BEQ ReadPlayer2A_Done
+    ; Spawn the bullet
+    LDa bullet2_active
+    BNE ReadPlayer2A_Done
+    ; No bullet active so spawn one
+    LDA #1
+    STA bullet2_active
+    LDA sprite_player2 + SPRITE_Y
+    STA sprite_bullet1 + SPRITE_Y
+    LDA #2
+    STA sprite_bullet1 + SPRITE_TILE
     LDA #0
-    SEC
-    SBC enemy_info+ENEMY_SPEED, x
-    STA enemy_info+ENEMY_SPEED, x
-    LDA sprite_enemy+SPRITE_Y, x
-    CLC
-    ADC #ENEMY_DESCENT_SPEED
-    STA sprite_enemy+SPRITE_Y, x
-    LDA sprite_enemy+SPRITE_ATTRIB, x
-    EOR #%01000000
-    STA sprite_enemy+SPRITE_ATTRIB, x
-UpdateEnemies_NoReverse:
+    STA sprite_bullet1 + SPRITE_ATTRIB
+    LDA sprite_player2 + SPRITE_X
+    STA sprite_bullet1 + SPRITE_X
+ReadPlayer2A_Done:
 
-                               ;             \1        \2        \3            \4            \5            \6            \7
-CheckCollisionWithEnemy .macro ; parameters: object_x, object_y, object_hit_x, object_hit_y, object_hit_w, object_hit_h, no_collision_label
-    ; If there is a collision, execution continues immediately after this macro
-    ; Else, jump to no_collision_label
-    LDA sprite_enemy+SPRITE_X, x  ; Calculate x_enemy - w_bullet - 1 (x1-w2-1)
-    .if \3 > 0
+    ;Update the bullet
+    LDA bullet2_active
+    BEQ UpdateBullet2_Done
+    LDA sprite_bullet1 + SPRITE_X
     SEC
-    SBC \3
-    .endif
-    SEC
-    SBC \5+1
-    CMP \1                        ; Compare with x_bullet (x2)
-    BCS \7                        ; Branch if x1-w2-1-BULLET_HITBOX_X >= x2 i.e. x1-w2 > x2
-    CLC
-    ADC \5+1+ENEMY_HITBOX_WIDTH   ; Calculate x_enemy + w_enemy (x1+w1), assuming w1 = 8
-    CMP \1                        ; Compare with x_bullet (x2)
-    BCC \7                        ; Branching if x1+w1-BULLET_HITBOX_X < x2
+    SBC #2
+    STA sprite_bullet1 + SPRITE_X
+    BCS UpdateBullet2_Done
+    ; If carry flag is clear
+    LDA #0
+    STA bullet2_active
+UpdateBullet2_Done:
 
-    LDA sprite_enemy+SPRITE_Y, x  ; Calculate y_enemy - h_bullet (y1-h2)
-    .if \3 > 0
+        LDA sprite_player1 + SPRITE_X
+        SEC
+        SBC #17
+        CMP sprite_bullet1 + SPRITE_X
+        BCS UpdatePlayer1_NoCollision
+        CLC
+        ADC #33
+        CMP sprite_bullet1 + SPRITE_X 
+        BCC UpdatePlayer1_NoCollision
+        LDA sprite_player1 + SPRITE_Y
+        SEC
+        SBC #17
+        CMP sprite_bullet1 + SPRITE_Y
+        BCS UpdatePlayer1_NoCollision
+        CLC
+        ADC #33
+        CMP sprite_bullet1 + SPRITE_Y
+        BCC UpdatePlayer1_NoCollision
+        ;Handle Collision
+        LDA #0
+        STA bullet2_active
+        LDA #$FF
+        STA sprite_bullet1 + SPRITE_X
+        LDA #$FF
+        STA sprite_player1 + SPRITE_X
+        LDA #$FF
+        STA sprite_player12 + SPRITE_X
+        LDA #$FF
+        STA sprite_player13 + SPRITE_X
+        LDA #$FF
+        STA sprite_player14 + SPRITE_X
+UpdatePlayer1_NoCollision:
+
+;                             \1            \2      \3         \4
+MoveWave .macro ; parameters: FoamHasMoved, Sprite, SkipLabel, FinsihLabel
+
+    LDA \1
+    BEQ \3
+    LDA \2
     SEC
-    SBC \4
-    .endif
-    SEC
-    SBC \6+1                
-    CMP \2                        ; Compare with y_bullet (y2)
-    BCS \7                        ; Branch if y1-h2 > y2
-    CLC
-    ADC \6+1+ENEMY_HITBOX_HEIGHT  ; Calculate y_enemy + h_enemy (y1+h1), assuming h1 = 8
-    CMP \2                        ; Compare with y_bullet (y2)
-    BCC \7                        ; Branching if y1+h1 < y2
+    SBC #1
+    STA \2
+    LDA #0
+    STA \1
+    JMP \4
     .endm
 
-    ; Check collision with bullet
-    CheckCollisionWithEnemy sprite_bullet+SPRITE_X, sprite_bullet+SPRITE_Y, #BULLET_HITBOX_X, #BULLET_HITBOX_Y, #BULLET_HITBOX_WIDTH, #BULLET_HITBOX_HEIGHT, UpdateEnemies_NoCollision
-    ; Handle collision
-    LDA #0                        ; Destroy the bullet and the enemy
-    STA bullet_active
-    STA enemy_info+ENEMY_ALIVE, x
-    LDA #$FF
-    STA sprite_bullet+SPRITE_Y
-    STA sprite_enemy+SPRITE_Y, x
-UpdateEnemies_NoCollision:
 
-    ; Check collision with player
-    CheckCollisionWithEnemy sprite_player+SPRITE_X, sprite_player+SPRITE_Y, #0, #0, #8, #8, UpdateEnemies_NoCollisionWithPlayer
-    ; Handle collision
-    JSR InitialiseGame
-    JMP UpdateEnemies_End
-UpdateEnemies_NoCollisionWithPlayer:
+    MoveWave foam1_hasMoved, sprite_foam1 + SPRITE_Y, Movement1, MovementDone1
 
-UpdateEnemies_Next:
-    DEX
-    DEX
-    DEX
-    DEX
-    BMI UpdateEnemies_End
-    JMP UpdateEnemies_Loop
-UpdateEnemies_End:
+Movement1:
+    LDA #1
+    STA foam1_hasMoved
+MovementDone1:
+    MoveWave foam2_hasMoved, sprite_foam2 + SPRITE_Y, Movement2, MovementDone2
+
+Movement2:
+    LDA #1
+    STA foam2_hasMoved
+MovementDone2:
+    MoveWave foam3_hasMoved, sprite_foam3 + SPRITE_Y, Movement3, MovementDone3
+
+Movement3:
+    LDA #1
+    STA foam3_hasMoved
+MovementDone3:
+    MoveWave foam4_hasMoved, sprite_foam4 + SPRITE_Y, Movement4, MovementDone4
+
+Movement4:
+    LDA #1
+    STA foam4_hasMoved
+MovementDone4:
+;     MoveWave SmallIsland_hasMoved, sprite_smallIsland + SPRITE_Y, IslandMovement1, IslandMovementDone1
+; IslandMovement1:
+;     LDA #1
+;     STA SmallIsland_hasMoved
+; IslandMovementDone1:
 
     ; Copy sprite data to the PPU
     LDA #0
@@ -417,4 +726,4 @@ UpdateEnemies_End:
 
     .bank 2
     .org $0000
-    .incbin "comp310.chr"
+    .incbin "PirateShip.chr"
