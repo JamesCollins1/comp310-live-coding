@@ -42,7 +42,7 @@ bullet_active      .rs 1
 bullet2_active     .rs 1
 temp_x             .rs 1
 temp_y             .rs 1
-foam1_hasMoved     .rs 1
+foam1_hasMoved     .rs 1    ;A flag to see whether the foam moved last turn to slow down movement. If 0 they have
 foam2_hasMoved     .rs 1
 foam3_hasMoved     .rs 1
 foam4_hasMoved     .rs 1
@@ -62,10 +62,10 @@ sprite_foam1       .rs 4
 sprite_foam2       .rs 4
 sprite_foam3       .rs 4
 sprite_foam4       .rs 4
-sprite_smallIsland .rs 4
-sprite_smallIsland2 .rs 4
-sprite_smallIsland3 .rs 4
-sprite_largeIsland1 .rs 4
+sprite_smallIsland .rs 4 ; 1 sprite = 1 island
+sprite_smallIsland2 .rs 4 ; 1 sprite = 1 island
+sprite_smallIsland3 .rs 4 ; 1 sprite = 1 island
+sprite_largeIsland1 .rs 4 ; 4 sprites make up one Large island
 sprite_largeIsland2 .rs 4
 sprite_largeIsland3 .rs 4
 sprite_largeIsland4 .rs 4
@@ -199,7 +199,7 @@ InitialiseGame: ; Begin subroutine
     STA PPUDATA
 
 
-    ; Write sprite data for sprite 0
+    ; Write sprite data for Player 1
     LDA #120    ; Y position
     STA sprite_player1 + SPRITE_Y
     LDA #0      ; Tile number
@@ -237,7 +237,7 @@ InitialiseGame: ; Begin subroutine
     STA sprite_player14 + SPRITE_X
 
 
-; Initialising player 2
+; Write sprite data for Player 2
     LDA #120    ; Y position
     STA sprite_player2 + SPRITE_Y
     LDA #0      ; Tile number
@@ -424,6 +424,7 @@ ReadController2:
     AND #BUTTON_DOWN
     BEQ Joypad1ReadDown_Done
   ; if ((JOYPAD1 & 1) != 0) {
+; Move the player Down
     LDA sprite_player1 + SPRITE_Y
     CLC
     ADC #1
@@ -448,7 +449,9 @@ Joypad1ReadDown_Done:         ; }
     ; Player 1 react to Up button
     LDA joypad1_state
     AND #BUTTON_UP
-    BEQ Joypad1ReadUp_Done  ; if ((JOYPAD1 & 1) != 0) {
+    BEQ Joypad1ReadUp_Done  
+    ; if ((JOYPAD1 & 1) != 0) {
+    ; Move the player up
     LDA sprite_player1 + SPRITE_Y
     SEC
     SBC #1
@@ -475,6 +478,7 @@ Joypad1ReadUp_Done:         ; }
     AND #BUTTON_DOWN
     BEQ Joypad2ReadDown_Done
     ; if ((JOYPAD2 & 1) != 0) {
+    ; Move the player Down
     LDA sprite_player2 + SPRITE_Y
     CLC
     ADC #1
@@ -502,6 +506,7 @@ Joypad2ReadDown_Done:
     AND #BUTTON_UP
     BEQ Joypad2ReadUp_Done
     ; if ((JOYPAD2 & 1) != 0) {
+    ; Move the player up
         LDA sprite_player2 + SPRITE_Y
         SEC
         SBC #1
@@ -558,6 +563,7 @@ ReadPlayer1A_Done:
     STA bullet_active
 UpdateBullet_Done:
 
+        ; Check for collision
         LDA sprite_player2 + SPRITE_X
         SEC
         SBC #17
@@ -628,6 +634,7 @@ ReadPlayer2A_Done:
     STA bullet2_active
 UpdateBullet2_Done:
 
+        ;Check for Collision
         LDA sprite_player1 + SPRITE_X
         SEC
         SBC #17
@@ -661,8 +668,9 @@ UpdateBullet2_Done:
         STA sprite_player14 + SPRITE_X
 UpdatePlayer1_NoCollision:
 
+;Macro that handles all the waves movement
 ;                             \1            \2      \3         \4
-MoveWave .macro ; parameters: FoamHasMoved, Sprite, SkipLabel, FinsihLabel
+MoveWave .macro ; parameters: FoamHasMoved, Sprite, SkipLabel, FinishLabel
 
     LDA \1
     BEQ \3
@@ -675,8 +683,8 @@ MoveWave .macro ; parameters: FoamHasMoved, Sprite, SkipLabel, FinsihLabel
     JMP \4
     .endm
 
-
-    MoveWave foam1_hasMoved, sprite_foam1 + SPRITE_Y, Movement1, MovementDone1
+;Calling the macro for all waves
+MoveWave foam1_hasMoved, sprite_foam1 + SPRITE_Y, Movement1, MovementDone1
 
 Movement1:
     LDA #1
@@ -700,11 +708,6 @@ Movement4:
     LDA #1
     STA foam4_hasMoved
 MovementDone4:
-;     MoveWave SmallIsland_hasMoved, sprite_smallIsland + SPRITE_Y, IslandMovement1, IslandMovementDone1
-; IslandMovement1:
-;     LDA #1
-;     STA SmallIsland_hasMoved
-; IslandMovementDone1:
 
     ; Copy sprite data to the PPU
     LDA #0
